@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - RJ Case Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="bi bi-house-door me-2"></i>
+            Dashboard
+            <small class="text-muted">Welcome back, {{ current_user.username }}!</small>
+        </h2>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white dashboard-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title mb-0">Total Participants</h5>
+                        <h2 class="mb-0">{{ total_participants }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-people fs-1 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('participants') }}" class="text-white text-decoration-none">
+                    View all <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    {% if current_user.role in ['coordinator', 'admin'] %}
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-dark dashboard-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title mb-0">Pending Referrals</h5>
+                        <h2 class="mb-0">{{ pending_referrals }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-inbox fs-1 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('referrals', status='pending') }}" class="text-dark text-decoration-none">
+                    Review pending <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white dashboard-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title mb-0">Active Cases</h5>
+                        <h2 class="mb-0">{{ active_cases }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-folder-check fs-1 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('cases', status='in-progress') }}" class="text-white text-decoration-none">
+                    View active <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-info text-white dashboard-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title mb-0">Completed Cases</h5>
+                        <h2 class="mb-0">{{ completed_cases }}</h2>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="bi bi-check-circle fs-1 opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('cases', status='completed') }}" class="text-white text-decoration-none">
+                    View completed <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightning me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if current_user.role in ['coordinator', 'admin'] %}
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('new_participant') }}" class="btn btn-primary btn-lg d-block">
+                            <i class="bi bi-person-plus me-2"></i>Add New Participant
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('referrals') }}" class="btn btn-warning btn-lg d-block">
+                            <i class="bi bi-inbox me-2"></i>Review Referrals
+                            {% if pending_referrals > 0 %}
+                            <span class="badge bg-danger ms-2">{{ pending_referrals }}</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('participants') }}" class="btn btn-outline-primary btn-lg d-block">
+                            <i class="bi bi-search me-2"></i>Search Participants
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{{ url_for('cases') }}" class="btn btn-outline-secondary btn-lg d-block">
+                            <i class="bi bi-folder me-2"></i>Browse All Cases
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Referrals (Coordinators and Admins only) -->
+{% if current_user.role in ['coordinator', 'admin'] and recent_referrals %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-inbox me-2"></i>Recent Referrals
+                </h5>
+                <a href="{{ url_for('referrals') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Referrer</th>
+                                <th>Urgency</th>
+                                <th>Status</th>
+                                <th>Received</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for referral in recent_referrals %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('referral_detail', id=referral.id) }}" 
+                                       class="text-decoration-none">
+                                        {{ referral.full_name }}
+                                    </a>
+                                    {% if referral.age %}
+                                    <small class="text-muted d-block">Age: {{ referral.age }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ referral.referrer_name }}
+                                    {% if referral.referrer_organization %}
+                                    <small class="text-muted d-block">{{ referral.referrer_organization }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ referral.urgency_badge_class }}">
+                                        {{ referral.urgency_level.title() }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ referral.status_badge_class }}">
+                                        {{ referral.status.replace('-', ' ').title() }}
+                                    </span>
+                                </td>
+                                <td>{{ referral.created_at.strftime('%m/%d/%Y') }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('referral_detail', id=referral.id) }}" 
+                                           class="btn btn-outline-primary btn-sm" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if referral.status == 'pending' %}
+                                        <button type="button" class="btn btn-outline-success btn-sm" 
+                                                onclick="acceptReferral({{ referral.id }})" title="Accept">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                onclick="showRejectModal({{ referral.id }})" title="Reject">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Cases -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Recent Cases
+                </h5>
+                <a href="{{ url_for('cases') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_cases %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Case #</th>
+                                    <th>Participant</th>
+                                    <th>Program Type</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Assigned Staff</th>
+                                    {% if current_user.role in ['coordinator', 'admin'] %}
+                                    <th>Actions</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for case in recent_cases %}
+                                <tr>
+                                    <td><code>{{ case.case_number }}</code></td>
+                                    <td>
+                                        <a href="{{ url_for('participant_detail', id=case.participant.id) }}" 
+                                           class="text-decoration-none">
+                                            {{ case.participant.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ case.program_type.replace('-', ' ').title() if case.program_type else '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ case.status_badge_class }}">
+                                            {{ case.status.replace('-', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ case.created_at.strftime('%m/%d/%Y') }}</td>
+                                    <td>{{ case.assigned_staff or '-' }}</td>
+                                    {% if current_user.role in ['coordinator', 'admin'] %}
+                                    <td>
+                                        <a href="{{ url_for('edit_case', id=case.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="Edit Case">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 empty-state">
+                        <i class="bi bi-folder-x fs-1 text-muted"></i>
+                        <p class="text-muted mt-2">No cases found. 
+                        {% if current_user.role in ['coordinator', 'admin'] %}
+                        Start by reviewing referrals or adding a participant and creating their first case.
+                        {% else %}
+                        Check back later or contact your coordinator.
+                        {% endif %}
+                        </p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Referral Action Modals -->
+{% if current_user.role in ['coordinator', 'admin'] %}
+<!-- Reject Referral Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Referral</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                <div class="modal-body">
+                    <p>Please provide a reason for rejecting this referral:</p>
+                    <textarea name="rejection_reason" class="form-control" rows="3" 
+                              placeholder="Reason for rejection..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Referral</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if current_user.role in ['coordinator', 'admin'] %}
+<script>
+function acceptReferral(referralId) {
+    if (confirm('Are you sure you want to accept this referral? This will create a participant record.')) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/referral/${referralId}/accept`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function showRejectModal(referralId) {
+    const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    const form = document.getElementById('rejectForm');
+    form.action = `/referral/${referralId}/reject`;
+    modal.show();
+}
+
+// Auto-refresh pending referrals count every 5 minutes
+setInterval(function() {
+    // You could implement an AJAX call here to update the pending count
+    // without refreshing the entire page
+}, 300000);
+</script>
+{% endif %}
+{% endblock %}

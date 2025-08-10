@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - RJ Case Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-person-circle me-2"></i>My Profile
+            </h2>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-gear me-2"></i>Account Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <strong>Username:</strong>
+                    </div>
+                    <div class="col-md-9">
+                        {{ current_user.username }}
+                        <small class="text-muted">(Cannot be changed)</small>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <strong>Role:</strong>
+                    </div>
+                    <div class="col-md-9">
+                        <span class="badge bg-{{ 'danger' if current_user.role == 'admin' else 'primary' if current_user.role == 'coordinator' else 'secondary' }} fs-6">
+                            {{ current_user.role_display }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <strong>Account Created:</strong>
+                    </div>
+                    <div class="col-md-9">
+                        {{ current_user.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <form method="POST">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.email.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.current_password.label(class="form-label") }}
+                        {{ form.current_password(class="form-control" + (" is-invalid" if form.current_password.errors else "")) }}
+                        {% if form.current_password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.current_password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Required to save any changes</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.new_password.label(class="form-label") }}
+                        {{ form.new_password(class="form-control" + (" is-invalid" if form.new_password.errors else "")) }}
+                        {% if form.new_password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.new_password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Minimum 6 characters. Leave blank to keep current password.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.confirm_password.label(class="form-label") }}
+                        {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else "")) }}
+                        {% if form.confirm_password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.confirm_password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        {{ form.submit(class="btn btn-primary") }}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Permissions Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>My Permissions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>What I can do:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>View participant information</li>
+                            {% if current_user.has_permission('add_participants') %}
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Add new participants</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Edit participant information</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Manage cases</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Review referrals</li>
+                            {% endif %}
+                            {% if current_user.has_permission('manage_users') %}
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Manage user accounts</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>System administration</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        {% if not current_user.has_permission('add_participants') %}
+                        <h6>Restricted actions:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-x-circle text-danger me-2"></i>Cannot add participants</li>
+                            <li><i class="bi bi-x-circle text-danger me-2"></i>Cannot edit participant information</li>
+                            <li><i class="bi bi-x-circle text-danger me-2"></i>Cannot manage cases</li>
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if current_user.role == 'volunteer' %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Volunteer Access:</strong> You have view-only access to participant information for safety and coordination purposes. 
+                    Contact a coordinator or administrator if you need to make changes.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

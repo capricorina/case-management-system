@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Cases - RJ Case Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="bi bi-folder me-2"></i>Cases
+            <small class="text-muted">({{ cases.total }} total)</small>
+        </h2>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="GET" action="{{ url_for('cases') }}">
+            <div class="input-group">
+                <input type="text" class="form-control" name="search" 
+                       value="{{ search }}" placeholder="Search by participant name or case number...">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+                {% if search %}
+                <a href="{{ url_for('cases') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% if status %}
+                <input type="hidden" name="status" value="{{ status }}">
+            {% endif %}
+        </form>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="btn-group w-100" role="group">
+            <a href="{{ url_for('cases') }}" 
+               class="btn btn-outline-secondary{% if not status %} active{% endif %}">
+                All Cases
+            </a>
+            <a href="{{ url_for('cases', status='in-progress') }}" 
+               class="btn btn-outline-success{% if status == 'in-progress' %} active{% endif %}">
+                Active
+            </a>
+            <a href="{{ url_for('cases', status='completed') }}" 
+               class="btn btn-outline-info{% if status == 'completed' %} active{% endif %}">
+                Completed
+            </a>
+            <a href="{{ url_for('cases', status='waitlisted') }}" 
+               class="btn btn-outline-warning{% if status == 'waitlisted' %} active{% endif %}">
+                Waitlisted
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Results -->
+{% if cases.items %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Case #</th>
+                        <th>Participant</th>
+                        <th>Program Type</th>
+                        <th>Status</th>
+                        <th>Assigned Staff</th>
+                        <th>Days Active</th>
+                        <th>Created</th>
+                        <th width="120">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for case in cases.items %}
+                    <tr>
+                        <td><code>{{ case.case_number }}</code></td>
+                        <td>
+                            <a href="{{ url_for('participant_detail', id=case.participant.id) }}" 
+                               class="text-decoration-none">
+                                {{ case.participant.full_name }}
+                            </a>
+                        </td>
+                        <td>{{ case.program_type.replace('-', ' ').title() if case.program_type else '-' }}</td>
+                        <td>
+                            <span class="badge bg-{{ case.status_badge_class }}">
+                                {{ case.status.replace('-', ' ').title() }}
+                            </span>
+                        </td>
+                        <td>{{ case.assigned_staff or '-' }}</td>
+                        <td>{{ case.days_active }} days</td>
+                        <td>{{ case.created_at.strftime('%m/%d/%Y') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('participant_detail', id=case.participant.id) }}" 
+                                   class="btn btn-outline-primary" title="View Participant">
+                                    <i class="bi bi-person"></i>
+                                </a>
+                                <a href="{{ url_for('edit_case', id=case.id) }}" 
+                                   class="btn btn-outline-secondary" title="Edit Case">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% if case.description %}
+                    <tr class="table-light">
+                        <td colspan="8">
+                            <small class="text-muted">
+                                <strong>Description:</strong> {{ case.description }}
+                            </small>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if cases.pages > 1 %}
+<nav aria-label="Cases pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if cases.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('cases', page=cases.prev_num, status=status, search=search) }}">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </a>
+            </li>
+        {% endif %}
+        
+        {% for page_num in cases.iter_pages() %}
+            {% if page_num %}
+                {% if page_num != cases.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('cases', page=page_num, status=status, search=search) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if cases.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('cases', page=cases.next_num, status=status, search=search) }}">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-folder-x fs-1 text-muted"></i>
+    {% if search or status %}
+        <h4 class="mt-3">No cases found</h4>
+        <p class="text-muted">No cases match your current filters.</p>
+        <a href="{{ url_for('cases') }}" class="btn btn-outline-primary">Clear Filters</a>
+    {% else %}
+        <h4 class="mt-3">No cases yet</h4>
+        <p class="text-muted">Cases will appear here as you add participants and create cases for them.</p>
+        <a href="{{ url_for('participants') }}" class="btn btn-primary">
+            <i class="bi bi-people me-1"></i>View Participants
+        </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Referral: {{ referral.full_name }} - RJ Case Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-inbox me-2"></i>Referral: {{ referral.full_name }}
+                <span class="badge bg-{{ referral.status_badge_class }} ms-2">{{ referral.status.title() }}</span>
+                <span class="badge bg-{{ referral.urgency_badge_class }} ms-1">{{ referral.urgency_level.title() }} Priority</span>
+            </h2>
+            <div class="btn-group">
+                {% if referral.status == 'pending' %}
+                <form method="POST" action="{{ url_for('accept_referral', id=referral.id) }}" class="d-inline me-2">
+                    <button type="submit" class="btn btn-success" 
+                            onclick="return confirm('Accept this referral and create participant record?')">
+                        <i class="bi bi-check-circle me-1"></i>Accept Referral
+                    </button>
+                </form>
+                <button class="btn btn-danger" onclick="showRejectModal()">
+                    <i class="bi bi-x-circle me-1"></i>Reject Referral
+                </button>
+                {% elif referral.status == 'accepted' and referral.participant_id %}
+                <a href="{{ url_for('participant_detail', id=referral.participant_id) }}" class="btn btn-primary">
+                    <i class="bi bi-person me-1"></i>View Participant Record
+                </a>
+                {% endif %}
+                <a href="{{ url_for('referrals') }}" class="btn btn-outline-secondary ms-2">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Referrals
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-md-8">
+        <!-- Referral Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Referral Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Submitted:</strong> {{ referral.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Status:</strong> 
+                        <span class="badge bg-{{ referral.status_badge_class }}">{{ referral.status.title() }}</span>
+                    </div>
+                </div>
+                
+                {% if referral.processed_at %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <strong>Processed:</strong> {{ referral.processed_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <strong>Processed by:</strong> {{ referral.processor.username if referral.processor else 'Unknown' }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if referral.rejection_reason %}
+                <div class="alert alert-danger">
+                    <strong>Rejection Reason:</strong><br>
+                    {{ referral.rejection_reason }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Incident Details -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Incident Information</h5>
+            </div>
+            <div class="card-body">
+                {% if referral.incident_date %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Incident Date:</strong> {{ referral.incident_date.strftime('%B %d, %Y') }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Priority Level:</strong> 
+                        <span class="badge bg-{{ referral.urgency_badge_class }}">{{ referral.urgency_level.title() }}</span>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if referral.incident_description %}
+                <div class="mb-3">
+                    <strong>Incident Description:</strong><br>
+                    <div class="border rounded p-3 bg-light">
+                        {{ referral.incident_description | nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if referral.desired_outcome %}
+                <div class="mb-3">
+                    <strong>Desired Outcome:</strong><br>
+                    <div class="border rounded p-3 bg-light">
+                        {{ referral.desired_outcome | nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if referral.previous_interventions %}
+                <div class="mb-3">
+                    <strong>Previous Interventions:</strong><br>
+                    <div class="border rounded p-3 bg-light">
+                        {{ referral.previous_interventions | nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Person Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person me-2"></i>Person Being Referred</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>Name:</strong> {{ referral.full_name }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <strong>Age:</strong> {{ referral.age if referral.age else 'Not provided' }}
+                    </div>
+                </div>
+                
+                {% if referral.date_of_birth %}
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>Date of Birth:</strong> {{ referral.date_of_birth.strftime('%B %d, %Y') }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    {% if referral.phone %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Phone:</strong> <a href="tel:{{ referral.phone }}" class="text-decoration-none">{{ referral.phone }}</a>
+                    </div>
+                    {% endif %}
+                    {% if referral.email %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Email:</strong> <a href="mailto:{{ referral.email }}" class="text-decoration-none">{{ referral.email }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if referral.street_address or referral.city or referral.state %}
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <strong>Address:</strong><br>
+                        {{ referral.street_address }}<br>
+                        {{ referral.city }}{% if referral.city and referral.state %}, {% endif %}{{ referral.state }} {{ referral.zip_code }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if referral.school_name or referral.grade_level %}
+                <div class="row mt-3">
+                    {% if referral.school_name %}
+                    <div class="col-md-8">
+                        <strong>School:</strong> {{ referral.school_name }}
+                    </div>
+                    {% endif %}
+                    {% if referral.grade_level %}
+                    <div class="col-md-4">
+                        <strong>Grade:</strong> {{ referral.grade_level.replace('-', ' ').title() }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Additional Information -->
+        {% if referral.emergency_contact_name or referral.allergies or referral.illnesses_disabilities %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-heart-pulse me-2"></i>Additional Information</h5>
+            </div>
+            <div class="card-body">
+                {% if referral.emergency_contact_name %}
+                <div class="mb-3">
+                    <strong>Emergency Contact:</strong><br>
+                    {{ referral.emergency_contact_name }}
+                    {% if referral.emergency_contact_phone %}
+                        - <a href="tel:{{ referral.emergency_contact_phone }}" class="text-decoration-none">{{ referral.emergency_contact_phone }}</a>
+                    {% endif %}
+                    {% if referral.emergency_contact_relationship %}
+                        ({{ referral.emergency_contact_relationship.title() }})
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if referral.allergies %}
+                <div class="mb-3">
+                    <strong>Allergies:</strong><br>
+                    <div class="alert alert-warning">{{ referral.allergies }}</div>
+                </div>
+                {% endif %}
+                
+                {% if referral.illnesses_disabilities %}
+                <div class="mb-3">
+                    <strong>Medical Conditions/Disabilities:</strong><br>
+                    <div class="alert alert-info">{{ referral.illnesses_disabilities }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-md-4">
+        <!-- Referrer Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-check me-2"></i>Referrer Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Name:</strong><br>
+                    {{ referral.referrer_name }}
+                </div>
+                
+                <div class="mb-3">
+                    <strong>Email:</strong><br>
+                    <a href="mailto:{{ referral.referrer_email }}" class="text-decoration-none">{{ referral.referrer_email }}</a>
+                </div>
+                
+                {% if referral.referrer_phone %}
+                <div class="mb-3">
+                    <strong>Phone:</strong><br>
+                    <a href="tel:{{ referral.referrer_phone }}" class="text-decoration-none">{{ referral.referrer_phone }}</a>
+                </div>
+                {% endif %}
+                
+                {% if referral.referrer_organization %}
+                <div class="mb-3">
+                    <strong>Organization:</strong><br>
+                    {{ referral.referrer_organization }}
+                </div>
+                {% endif %}
+                
+                {% if referral.referrer_relationship %}
+                <div class="mb-3">
+                    <strong>Relationship:</strong><br>
+                    {{ referral.referrer_relationship }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        {% if referral.status == 'pending' %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body d-grid gap-2">
+                <form method="POST" action="{{ url_for('accept_referral', id=referral.id) }}">
+                    <button type="submit" class="btn btn-success w-100" 
+                            onclick="return confirm('Accept this referral and create participant record?')">
+                        <i class="bi bi-check-circle me-1"></i>Accept & Create Participant
+                    </button>
+                </form>
+                <button class="btn btn-danger w-100" onclick="showRejectModal()">
+                    <i class="bi bi-x-circle me-1"></i>Reject Referral
+                </button>
+            </div>
+        </div>
+        {% elif referral.status == 'accepted' and referral.participant_id %}
+        <div class="card mb-4 border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Accepted</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">This referral has been accepted and a participant record has been created.</p>
+                <a href="{{ url_for('participant_detail', id=referral.participant_id) }}" class="btn btn-primary w-100">
+                    <i class="bi bi-person me-1"></i>View Participant Record
+                </a>
+            </div>
+        </div>
+        {% elif referral.status == 'rejected' %}
+        <div class="card mb-4 border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-x-circle me-2"></i>Rejected</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">This referral has been rejected and no participant record will be created.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reject Referral</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('reject_referral', id=referral.id) }}">
+                <div class="modal-body">
+                    <p>Are you sure you want to reject the referral for <strong>{{ referral.full_name }}</strong>?</p>
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label">Reason for rejection:</label>
+                        <textarea name="rejection_reason" id="rejection_reason" class="form-control" 
+                                  rows="3" placeholder="Please provide a reason for rejection..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject Referral</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showRejectModal() {
+    new bootstrap.Modal(document.getElementById('rejectModal')).show();
+}
+</script>
+
+<style>
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+
+.border.rounded {
+    border-color: #dee2e6 !important;
+}
+</style>
+{% endblock %}

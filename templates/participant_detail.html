@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}{{ participant.full_name }} - RJ Case Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-person me-2"></i>{{ participant.full_name }}
+                {% if participant.age %}
+                    <small class="text-muted">({{ participant.age }} years old)</small>
+                {% endif %}
+            </h2>
+            <div class="btn-group">
+                <a href="{{ url_for('edit_participant', id=participant.id) }}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-1"></i>Edit Participant
+                </a>
+                <a href="{{ url_for('new_case', participant_id=participant.id) }}" class="btn btn-success">
+                    <i class="bi bi-plus me-1"></i>New Case
+                </a>
+                <a href="{{ url_for('participants') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-md-8">
+        <!-- Basic Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Basic Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Date of Birth:</strong> 
+                        {{ participant.date_of_birth.strftime('%B %d, %Y') if participant.date_of_birth else 'Not provided' }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Age:</strong> {{ participant.age if participant.age else 'Not available' }}
+                    </div>
+                </div>
+                {% if participant.pronouns %}
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>Pronouns:</strong> {{ participant.pronouns }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-telephone me-2"></i>Contact Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if participant.phone %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Phone:</strong> 
+                        <a href="tel:{{ participant.phone }}" class="text-decoration-none">{{ participant.phone }}</a>
+                    </div>
+                    {% endif %}
+                    {% if participant.email %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Email:</strong> 
+                        <a href="mailto:{{ participant.email }}" class="text-decoration-none">{{ participant.email }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if participant.street_address or participant.city or participant.state or participant.zip_code %}
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <strong>Address:</strong><br>
+                        {{ participant.street_address }}<br>
+                        {{ participant.city }}{% if participant.city and participant.state %}, {% endif %}{{ participant.state }} {{ participant.zip_code }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if participant.preferred_contact_method or participant.preferred_language %}
+                <div class="row mt-3">
+                    {% if participant.preferred_contact_method %}
+                    <div class="col-md-6">
+                        <strong>Preferred Contact:</strong> {{ participant.preferred_contact_method.replace('_', ' ').title() }}
+                    </div>
+                    {% endif %}
+                    {% if participant.preferred_language %}
+                    <div class="col-md-6">
+                        <strong>Preferred Language:</strong> {{ participant.preferred_language.title() }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Important Persons -->
+        {% if important_persons %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Important Persons</h5>
+            </div>
+            <div class="card-body">
+                {% for person in important_persons %}
+                <div class="border rounded p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>{{ person.name }}</strong><br>
+                            <span class="badge bg-secondary">{{ person.role.replace('_', ' ').title() }}</span>
+                        </div>
+                        <div class="col-md-6">
+                            {% if person.phone %}
+                                <div><i class="bi bi-telephone me-1"></i><a href="tel:{{ person.phone }}" class="text-decoration-none">{{ person.phone }}</a></div>
+                            {% endif %}
+                            {% if person.email %}
+                                <div><i class="bi bi-envelope me-1"></i><a href="mailto:{{ person.email }}" class="text-decoration-none">{{ person.email }}</a></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if person.notes %}
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small class="text-muted">{{ person.notes }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Emergency Contact -->
+        {% if participant.emergency_contact_name %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-exclamation me-2"></i>Emergency Contact</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Name:</strong> {{ participant.emergency_contact_name }}
+                    </div>
+                    {% if participant.emergency_contact_phone %}
+                    <div class="col-md-6">
+                        <strong>Phone:</strong> 
+                        <a href="tel:{{ participant.emergency_contact_phone }}" class="text-decoration-none">{{ participant.emergency_contact_phone }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if participant.emergency_contact_relationship %}
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <strong>Relationship:</strong> {{ participant.emergency_contact_relationship.title() }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Demographic Information -->
+        {% if participant.race or participant.ethnicity or participant.gender_identity or participant.sex or participant.family_structure %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Demographic Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if participant.race %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Race:</strong> {{ participant.race }}
+                    </div>
+                    {% endif %}
+                    {% if participant.ethnicity %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Ethnicity:</strong> {{ participant.ethnicity.replace('_', ' ').title() }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="row">
+                    {% if participant.gender_identity %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Gender Identity:</strong> {{ participant.gender_identity }}
+                    </div>
+                    {% endif %}
+                    {% if participant.sex %}
+                    <div class="col-md-6 mb-2">
+                        <strong>Sex Assigned at Birth:</strong> {{ participant.sex.replace('_', ' ').title() }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% if participant.family_structure %}
+                <div class="row">
+                    <div class="col-md-6 mb-2">
+                        <strong>Family Structure:</strong> {{ participant.family_structure.replace('_', ' ').title() }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Health Information -->
+        {% if participant.allergies or participant.illnesses_disabilities or participant.primary_care_doctor or participant.emergency_instructions %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-heart-pulse me-2"></i>Health Information</h5>
+            </div>
+            <div class="card-body">
+                {% if participant.allergies %}
+                <div class="mb-3">
+                    <strong>Allergies:</strong><br>
+                    <div class="alert alert-warning">{{ participant.allergies }}</div>
+                </div>
+                {% endif %}
+                
+                {% if participant.illnesses_disabilities %}
+                <div class="mb-3">
+                    <strong>Illnesses or Disabilities:</strong><br>
+                    <div class="alert alert-info">{{ participant.illnesses_disabilities }}</div>
+                </div>
+                {% endif %}
+                
+                {% if participant.primary_care_doctor %}
+                <div class="mb-3">
+                    <strong>Primary Care Doctor:</strong> {{ participant.primary_care_doctor }}
+                </div>
+                {% endif %}
+                
+                {% if participant.emergency_instructions %}
+                <div class="mb-3">
+                    <strong>Emergency Instructions:</strong><br>
+                    <div class="alert alert-danger">{{ participant.emergency_instructions }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- School Information -->
+        {% if participant.school_name or participant.grade_level %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-mortarboard me-2"></i>School Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if participant.school_name %}
+                    <div class="col-md-8">
+                        <strong>School:</strong> {{ participant.school_name }}
+                    </div>
+                    {% endif %}
+                    {% if participant.grade_level %}
+                    <div class="col-md-4">
+                        <strong>Grade Level:</strong> {{ participant.grade_level.replace('-', ' ').title() }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Additional Notes -->
+        {% if participant.notes %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-sticky me-2"></i>Additional Notes</h5>
+            </div>
+            <div class="card-body">
+                {{ participant.notes | nl2br }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-md-4">
+        <!-- Summary Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h3 class="text-primary">{{ cases|length }}</h3>
+                        <small class="text-muted">Total Cases</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-success">{{ participant.active_cases|length }}</h3>
+                        <small class="text-muted">Active Cases</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-muted">
+                    <small><strong>Created:</strong> {{ participant.created_at.strftime('%B %d, %Y') }}</small><br>
+                    <small><strong>Last Updated:</strong> {{ participant.updated_at.strftime('%B %d, %Y') }}</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body d-grid gap-2">
+                <a href="{{ url_for('new_case', participant_id=participant.id) }}" class="btn btn-success">
+                    <i class="bi bi-plus me-1"></i>Create New Case
+                </a>
+                <a href="{{ url_for('edit_participant', id=participant.id) }}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-1"></i>Edit Information
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cases Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-folder me-2"></i>Cases</h5>
+                <a href="{{ url_for('new_case', participant_id=participant.id) }}" class="btn btn-sm btn-success">
+                    <i class="bi bi-plus me-1"></i>New Case
+                </a>
+            </div>
+            <div class="card-body">
+                {% if cases %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Case #</th>
+                                    <th>Program Type</th>
+                                    <th>Status</th>
+                                    <th>Assigned Staff</th>
+                                    <th>Created</th>
+                                    <th>Days Active</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for case in cases %}
+                                <tr>
+                                    <td><code>{{ case.case_number }}</code></td>
+                                    <td>{{ case.program_type.replace('-', ' ').title() if case.program_type else '-' }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ case.status_badge_class }}">
+                                            {{ case.status.replace('-', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ case.assigned_staff or '-' }}</td>
+                                    <td>{{ case.created_at.strftime('%m/%d/%Y') }}</td>
+                                    <td>{{ case.days_active }} days</td>
+                                    <td>
+                                        <a href="{{ url_for('edit_case', id=case.id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% if case.description %}
+                                <tr class="table-light">
+                                    <td colspan="7">
+                                        <small class="text-muted">
+                                            <strong>Description:</strong> {{ case.description }}
+                                        </small>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-folder-x fs-1 text-muted"></i>
+                        <h5 class="mt-3">No Cases Yet</h5>
+                        <p class="text-muted">This participant doesn't have any cases yet.</p>
+                        <a href="{{ url_for('new_case', participant_id=participant.id) }}" class="btn btn-success">
+                            <i class="bi bi-plus me-1"></i>Create First Case
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.alert {
+    padding: 0.5rem;
+    margin-bottom: 0;
+    font-size: 0.9em;
+}
+
+.border.rounded {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}Participants - RJ Case Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>
+            <i class="bi bi-people me-2"></i>Participants
+            <small class="text-muted">({{ participants.total }} total)</small>
+        </h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('new_participant') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus me-1"></i>Add New Participant
+        </a>
+    </div>
+</div>
+
+<!-- Search -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="GET" action="{{ url_for('participants') }}">
+            <div class="input-group">
+                <input type="text" class="form-control" name="search" 
+                       value="{{ search }}" placeholder="Search participants by name or email...">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+                {% if search %}
+                <a href="{{ url_for('participants') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results -->
+{% if participants.items %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Contact Info</th>
+                        <th>School</th>
+                        <th>Active Cases</th>
+                        <th>Created</th>
+                        <th width="120">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for participant in participants.items %}
+                    <tr>
+                        <td>
+                            <strong>{{ participant.full_name }}</strong>
+                        </td>
+                        <td>
+                            {% if participant.age %}
+                                {{ participant.age }} years
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if participant.phone %}
+                                <div><i class="bi bi-telephone me-1"></i>{{ participant.phone }}</div>
+                            {% endif %}
+                            {% if participant.email %}
+                                <div><i class="bi bi-envelope me-1"></i>{{ participant.email }}</div>
+                            {% endif %}
+                            {% if not participant.phone and not participant.email %}
+                                <span class="text-muted">No contact info</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if participant.school_name %}
+                                {{ participant.school_name }}
+                                {% if participant.grade_level %}
+                                    <br><small class="text-muted">{{ participant.grade_level }}</small>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set active = participant.active_cases %}
+                            {% if active %}
+                                <span class="badge bg-success">{{ active|length }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">0</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ participant.created_at.strftime('%m/%d/%Y') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('participant_detail', id=participant.id) }}" 
+                                   class="btn btn-outline-primary" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('edit_participant', id=participant.id) }}" 
+                                   class="btn btn-outline-secondary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{{ url_for('new_case', participant_id=participant.id) }}" 
+                                   class="btn btn-outline-success" title="New Case">
+                                    <i class="bi bi-plus"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if participants.pages > 1 %}
+<nav aria-label="Participants pagination" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if participants.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('participants', page=participants.prev_num, search=search) }}">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </a>
+            </li>
+        {% endif %}
+        
+        {% for page_num in participants.iter_pages() %}
+            {% if page_num %}
+                {% if page_num != participants.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('participants', page=page_num, search=search) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if participants.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('participants', page=participants.next_num, search=search) }}">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-person-x fs-1 text-muted"></i>
+    {% if search %}
+        <h4 class="mt-3">No participants found</h4>
+        <p class="text-muted">No participants match your search criteria.</p>
+        <a href="{{ url_for('participants') }}" class="btn btn-outline-primary">Clear Search</a>
+    {% else %}
+        <h4 class="mt-3">No participants yet</h4>
+        <p class="text-muted">Start by adding your first participant to the system.</p>
+        <a href="{{ url_for('new_participant') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus me-1"></i>Add First Participant
+        </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

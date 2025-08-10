@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - RJ Case Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-person-gear me-2"></i>{{ title }}
+                {% if user %}
+                    <br><small class="text-muted">{{ user.username }}</small>
+                {% endif %}
+            </h2>
+            <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back to Users
+            </a>
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person-lines-fill me-2"></i>Account Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.username.label(class="form-label required") }}
+                            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.username.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Must be unique, 3-80 characters</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.email.label(class="form-label required") }}
+                            {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Must be unique, valid email address</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.password.label(class="form-label" + (" required" if not user else "")) }}
+                        {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.password.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            {% if user %}
+                                Leave blank to keep current password. Minimum 6 characters if changing.
+                            {% else %}
+                                Minimum 6 characters. User will be able to change this after first login.
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-shield-check me-2"></i>Permissions & Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.role.label(class="form-label required") }}
+                            {{ form.role(class="form-select" + (" is-invalid" if form.role.errors else "")) }}
+                            {% if form.role.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.role.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch pt-4">
+                                {{ form.is_active(class="form-check-input" + (" is-invalid" if form.is_active.errors else "")) }}
+                                {{ form.is_active.label(class="form-check-label") }}
+                                {% if form.is_active.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.is_active.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="form-text">Disabled users cannot log in</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Role Descriptions -->
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle me-2"></i>Role Permissions:</h6>
+                        <div class="row small">
+                            <div class="col-md-4">
+                                <strong>Volunteer:</strong>
+                                <ul class="mb-0">
+                                    <li>View participant information</li>
+                                    <li>Access safety/contact details</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Coordinator:</strong>
+                                <ul class="mb-0">
+                                    <li>All volunteer permissions</li>
+                                    <li>Add/edit participants</li>
+                                    <li>Manage cases</li>
+                                    <li>Process referrals</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Administrator:</strong>
+                                <ul class="mb-0">
+                                    <li>All coordinator permissions</li>
+                                    <li>User management</li>
+                                    <li>System administration</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                {{ form.submit(class="btn btn-primary btn-lg") }}
+                <a href="{{ url_for('users') }}" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+        
+        {% if user and user.id != current_user.id %}
+        <div class="card mt-4 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Danger Zone</h6>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6>{{ 'Enable' if not user.is_active else 'Disable' }} User Account</h6>
+                        <p class="text-muted mb-0">
+                            {% if user.is_active %}
+                                This will prevent {{ user.username }} from logging in, but will preserve all their data.
+                            {% else %}
+                                This will allow {{ user.username }} to log in again.
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <form method="POST" action="{{ url_for('toggle_user', id=user.id) }}" class="d-inline">
+                            <button type="submit" 
+                                    class="btn btn-{{ 'success' if not user.is_active else 'warning' }}"
+                                    onclick="return confirm('Are you sure you want to {{ 'enable' if not user.is_active else 'disable' }} {{ user.username }}?')">
+                                <i class="bi bi-{{ 'play' if not user.is_active else 'pause' }} me-1"></i>
+                                {{ 'Enable' if not user.is_active else 'Disable' }} Account
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.form-label.required::after {
+    content: " *";
+    color: #dc3545;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - RJ Case Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="bi bi-folder me-2"></i>{{ title }}
+                {% if participant %}
+                    <br><small class="text-muted">for {{ participant.full_name }}</small>
+                {% elif case %}
+                    <br><small class="text-muted">{{ case.case_number }}</small>
+                {% endif %}
+            </h2>
+            <a href="{% if case %}{{ url_for('participant_detail', id=case.participant_id) }}{% elif participant %}{{ url_for('participant_detail', id=participant.id) }}{% else %}{{ url_for('cases') }}{% endif %}" 
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Case Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.program_type.label(class="form-label required") }}
+                            {{ form.program_type(class="form-select" + (" is-invalid" if form.program_type.errors else "")) }}
+                            {% if form.program_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.program_type.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.status.label(class="form-label required") }}
+                            {{ form.status(class="form-select" + (" is-invalid" if form.status.errors else "")) }}
+                            {% if form.status.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.status.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else "")) }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.description.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Provide a brief description of the case and circumstances.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.assigned_staff.label(class="form-label") }}
+                        {{ form.assigned_staff(class="form-control" + (" is-invalid" if form.assigned_staff.errors else "")) }}
+                        {% if form.assigned_staff.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.assigned_staff.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-calendar me-2"></i>Important Dates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.referral_date.label(class="form-label") }}
+                            {{ form.referral_date(class="form-control" + (" is-invalid" if form.referral_date.errors else "")) }}
+                            {% if form.referral_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.referral_date.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.intake_date.label(class="form-label") }}
+                            {{ form.intake_date(class="form-control" + (" is-invalid" if form.intake_date.errors else "")) }}
+                            {% if form.intake_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.intake_date.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Case Background</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.referring_agency.label(class="form-label") }}
+                            {{ form.referring_agency(class="form-control" + (" is-invalid" if form.referring_agency.errors else "")) }}
+                            {% if form.referring_agency.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.referring_agency.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.offense_type.label(class="form-label") }}
+                            {{ form.offense_type(class="form-select" + (" is-invalid" if form.offense_type.errors else "")) }}
+                            {% if form.offense_type.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.offense_type.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.victim_info.label(class="form-label") }}
+                        {{ form.victim_info(class="form-control" + (" is-invalid" if form.victim_info.errors else "")) }}
+                        {% if form.victim_info.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.victim_info.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Include victim information if applicable (maintain confidentiality).</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-check-square me-2"></i>Outcome & Notes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.outcome_notes.label(class="form-label") }}
+                        {{ form.outcome_notes(class="form-control" + (" is-invalid" if form.outcome_notes.errors else "")) }}
+                        {% if form.outcome_notes.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.outcome_notes.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">Document agreements, outcomes, follow-up requirements, etc.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                {{ form.submit(class="btn btn-primary btn-lg") }}
+                <a href="{% if case %}{{ url_for('participant_detail', id=case.participant_id) }}{% elif participant %}{{ url_for('participant_detail', id=participant.id) }}{% else %}{{ url_for('cases') }}{% endif %}" 
+                   class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.form-label.required::after {
+    content: " *";
+    color: #dc3545;
+}
+</style>
+{% endblock %}
